@@ -1,0 +1,38 @@
+---
+title: "covid_exploration"
+author: "Juan Camilo Azuero"
+date: "2/9/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+In this project we are going to analyze ths distribution of shooting incidents over time in New York City. 
+
+## Import libraries
+```{r import_libraries, echo=T, results='hide',warning=FALSE,message=FALSE}
+library("tidyverse")
+library("lubridate")
+library("leaflet")
+library("forecast")
+library("prophet")
+library("zoo")
+```
+
+
+## Import data
+Data is imported from a public repository of the Jhon Hopkins university 
+```{r import_data}
+tests_data <- read_csv("https://github.com/govex/COVID-19/raw/master/data_tables/testing_data/time_series_covid19_US.csv?accessType=DOWNLOAD")
+vaccine_global_data <- read_csv("https://github.com/govex/COVID-19/raw/master/data_tables/vaccine_data/global_data/time_series_covid19_vaccine_global.csv?accessType=DOWNLOAD")
+vaccine_us_data <- read_csv("https://github.com/govex/COVID-19/raw/master/data_tables/vaccine_data/us_data/time_series/vaccine_data_us_timeline.csv?accessType=DOWNLOAD")
+```
+
+
+### Session info
+```{r session_info}
+sessionInfo()
+```
