@@ -15,23 +15,92 @@ In this project we are going to analyze ths distribution of shooting incidents o
 ## Import libraries
 ```{r import_libraries, echo=T, results='hide',warning=FALSE,message=FALSE}
 library("tidyverse")
-library("lubridate")
-library("leaflet")
-library("forecast")
-library("prophet")
 library("zoo")
+library("tidyr")
+library("dplyr")
 ```
 
 
 ## Import data
 Data is imported from a public repository of the Jhon Hopkins university 
-```{r import_data}
-tests_data <- read_csv("https://github.com/govex/COVID-19/raw/master/data_tables/testing_data/time_series_covid19_US.csv?accessType=DOWNLOAD")
-vaccine_global_data <- read_csv("https://github.com/govex/COVID-19/raw/master/data_tables/vaccine_data/global_data/time_series_covid19_vaccine_global.csv?accessType=DOWNLOAD")
-vaccine_us_data <- read_csv("https://github.com/govex/COVID-19/raw/master/data_tables/vaccine_data/us_data/time_series/vaccine_data_us_timeline.csv?accessType=DOWNLOAD")
+```{r import_data, results='hide',warning=FALSE,message=FALSE}
+base_url <- "https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/"
+access_type <- "?accessType=DOWNLOAD"
+confirmed_filename <- "csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"
+deaths_filename <- "csse_covid_19_time_series/time_series_covid19_deaths_global.csv"
+recovered_filename <- "csse_covid_19_time_series/time_series_covid19_recovered_global.csv"
+regions_filename <- "UID_ISO_FIPS_LookUp_Table.csv"
+
+cases <- read_csv(paste(base_url,confirmed_filename,access_type,sep=""))
+deaths <- read_csv(paste(base_url,deaths_filename,access_type,sep=""))
+regions <- read_csv(paste(base_url,regions_filename,access_type,sep=""))
 ```
 
-## TEST
+## Initial transformations
+```{r clean_data}
+colnames(cases)[colnames(cases) == "Country/Region"] <- "Country"
+colnames(deaths)[colnames(deaths) == "Country/Region"] <- "Country"
+colnames(regions)[colnames(regions) == "Country_Region"] <- "Country"
+# Delete info from places that are not countries, delete unnecesary columns
+# and transform data into long format
+cases <- cases %>% 
+    filter(is.na(cases["Province/State"])) %>% 
+    select(-c("Province/State","Lat","Long")) %>%
+    gather("day","cases",-c("Country"))
+deaths <- deaths %>% 
+    filter(is.na(deaths["Province/State"])) %>% 
+    select(-c("Province/State","Lat","Long")) %>%
+    gather("day","deaths",-c("Country"))
+regions <- regions %>% filter(is.na(regions["Province_State"])) %>% select("Country","Population")
+# Merge datasets into summary
+summary <- merge(cases,deaths,by=c("Country","day"))
+summary <- merge(summary,regions,by="Country", all.y = FALSE)
+summary <- summary %>% filter(!is.na(summary['Population']))
+
+summary$day <- as.Date(summary$day, format = "%m/%d/%y")
+summary <- summary[order(summary["Country"], summary["day"]),]
+# Obtains daily info from cumulative columns
+summary_aux <- summary %>% select("Country","day","cases","deaths") %>% mutate(day = day+1)
+colnames(summary_aux)[colnames(summary_aux) == "cases"] <- "cases_lag"
+colnames(summary_aux)[colnames(summary_aux) == "deaths"] <- "deaths_lag"
+summary <- merge(summary,summary_aux,by=c("Country","day"), all.y=FALSE)
+summary['cases_day'] = summary['cases']-summary['cases_lag']
+summary['deaths_day'] = summary['deaths']-summary['deaths_lag']
+summary <- summary %>% select(-c("cases_lag","deaths_lag"))
+# Normalize per million
+summary['cases_per_million'] = 1000000*summary['cases']/summary['Population']
+summary['deaths_per_million'] = 1000000*summary['deaths']/summary['Population']
+summary['cases_day_per_million'] = 1000000*summary['cases_day']/summary['Population']
+summary['deaths_day_per_million'] = 1000000*summary['deaths_day']/summary['Population']
+# Global summary
+global_summary <- summary %>% group_by(day) %>% summarize(cases=sum(cases), deaths=sum(deaths),
+                                                         cases_day=sum(cases_day), deaths_day=sum(deaths_day))
+global_summary["cases_day_wa"] = rollmean(global_summary["cases_day"],7,c(NA,NULL,NA))
+global_summary["deaths_day_wa"] = rollmean(global_summary["deaths_day"],7,c(NA,NULL,NA))
+global_summary["mortality_rate"] <- global_summary["deaths"]/global_summary["cases"]
+```
+## Global plots
+```{r plots_1, fig.width=7, fig.height=4, warning=FALSE}
+global_summary %>% select("day","cases","deaths") %>% gather("Variable","Value",-c("day")) %>% 
+    ggplot(aes(x=day, y=Value,color=Variable)) + geom_line() + xlab("day") + scale_y_continuous(trans='log2')
+global_summary %>% select("day","cases_day_wa") %>% 
+    ggplot(aes(x=day, y=cases_day_wa)) + geom_line() + xlab("day")
+global_summary %>% select("day","deaths_day_wa") %>% 
+    ggplot(aes(x=day, y=deaths_day_wa)) + geom_line() + xlab("day")
+global_summary %>% select("day","mortality_rate") %>% 
+    ggplot(aes(x=day, y=mortality_rate)) + geom_line() + xlab("day")
+```
+
+## Analysis by country
+```{r country_etl}
+summary_total <- summary %>% group_by(Country) %>% summarize(cases=sum(cases_day), deaths=sum(deaths_day),
+                                                     population=mean(Population))
+summary_total["mortality_rate"] <- summary_total["deaths"]/summary_total["cases"]
+summary_total["deaths_per_million"] <- 1000000*summary_total["deaths"]/summary_total["population"]
+summary_total["cases_per_million"] <- 1000000*summary_total["cases"]/summary_total["population"]
+summary_total_big <- summary_total %>% filter(population > 1000000)
+```
+
 ### Session info
 ```{r session_info}
 sessionInfo()
