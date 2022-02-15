@@ -2,7 +2,7 @@
 title: "covid_exploration"
 author: "Juan Camilo Azuero"
 date: "2/9/2022"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
