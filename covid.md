@@ -102,6 +102,8 @@ vaccine_us_data <- read_csv("https://github.com/govex/COVID-19/raw/master/data_t
     ##   Combined_Key = col_character()
     ## )
 
+## TEST
+
 ### Session info
 
 ``` r

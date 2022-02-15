@@ -31,7 +31,7 @@ vaccine_global_data <- read_csv("https://github.com/govex/COVID-19/raw/master/da
 vaccine_us_data <- read_csv("https://github.com/govex/COVID-19/raw/master/data_tables/vaccine_data/us_data/time_series/vaccine_data_us_timeline.csv?accessType=DOWNLOAD")
 ```
 
-
+## TEST
 ### Session info
 ```{r session_info}
 sessionInfo()
