@@ -1,5 +1,5 @@
 ---
-title: "covid_exploration"
+title: "COVID 19"
 author: "Juan Camilo Azuero"
 date: "2/9/2022"
 output: github_document
@@ -9,8 +9,7 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
-In this project we are going to analyze ths distribution of shooting incidents over time in New York City. 
+The purpose of this project is to explore how COVID has developed through time how it has affected different regions.
 
 ## Import libraries
 ```{r import_libraries, echo=T, results='hide',warning=FALSE,message=FALSE}
@@ -18,6 +17,7 @@ library("tidyverse")
 library("zoo")
 library("tidyr")
 library("dplyr")
+library("lemon")
 ```
 
 
@@ -80,28 +80,178 @@ global_summary["deaths_day_wa"] = rollmean(global_summary["deaths_day"],7,c(NA,N
 global_summary["mortality_rate"] <- global_summary["deaths"]/global_summary["cases"]
 ```
 ## Global plots
+First let's plot the evolution over time of the total number cases and deaths
+
 ```{r plots_1, fig.width=7, fig.height=4, warning=FALSE}
-global_summary %>% select("day","cases","deaths") %>% gather("Variable","Value",-c("day")) %>% 
-    ggplot(aes(x=day, y=Value,color=Variable)) + geom_line() + xlab("day") + scale_y_continuous(trans='log2')
+coeff <- 100
+deaths_color <- rgb(0.9, 0.2, 0.1, 1)
+cases_color <- rgb(0.2, 0.6, 0.9, 1)
+global_summary %>% select("day","cases","deaths") %>% 
+  ggplot(aes(x=day)) + 
+  geom_line(aes(y=cases),color=cases_color) + 
+  geom_line(aes(y=deaths*coeff),color=deaths_color) + 
+  xlab("Date") + 
+  scale_y_continuous(
+    name = "Cases",
+    sec.axis = sec_axis(~./coeff, name="Deaths")
+  ) +
+  theme(
+    axis.title.y = element_text(color = cases_color),
+    axis.title.y.right = element_text(color = deaths_color),
+    plot.title = element_text(size=14, face="bold.italic")
+  ) + 
+  ggtitle("Cases and deaths")
+```
+
+Now let's repeat the previous plot, but using a logarithmic axis for the amount of cases and deaths.
+
+```{r plots_2, fig.width=7, fig.height=4, warning=FALSE}
+global_summary %>% select("day","cases","deaths") %>% 
+  ggplot(aes(x=day)) + 
+  geom_line(aes(y=cases,colour="Cases")) + 
+  geom_line(aes(y=deaths,colour="Deaths")) +
+  xlab("Date") + 
+  ylab("Number of people") + 
+  scale_y_continuous(trans='log10') +
+  scale_colour_manual("", breaks = c("Cases", "Deaths"), values = c(cases_color,deaths_color)) + 
+  ggtitle("Cases and deaths")+
+  theme(plot.title = element_text(size=14, face="bold.italic"))
+```
+
+The first plot shows how cases and deaths has risen consistently since the start of 2020. The plot also shows how since 2022 the number of cases per day increased considerably due to the omicron variant.
+
+As the nature of contagion is exponential, the second graph is very useful to understand the evolution of the pandemic. The logarithmic transformation serves to see how high exponential growth in the first 3 months decayed until today. The wave because of omicron at the beginning of 2022 produces an upward turn of the cases, but deaths stayed flat.
+
+In order to further explore the evolution of cases and deaths through time, lets plot also the rate of change for these 2 variables.
+
+```{r plots_3, fig.width=7, fig.height=4, warning=FALSE}
+global_summary %>% select("day","cases","deaths","cases_day_wa","deaths_day_wa") %>% 
+  ggplot(aes(x=day),yaxp = c(0, 1, 10)) + 
+  geom_line(aes(y=100*cases_day_wa/cases,colour="Cases")) + 
+  geom_line(aes(y=100*deaths_day_wa/deaths,colour="Deaths")) +
+  xlab("Date") + 
+  ylab("Percentage increase") + 
+  scale_y_continuous(trans='log10',breaks=c(0,0.1,0.2,0.5,1,2,5,10,20,50,100)) +
+  scale_colour_manual("", breaks = c("Cases", "Deaths"), values = c(cases_color,deaths_color)) + 
+  ggtitle("Rate of change for deaths and confirmed cases") +
+  theme(plot.title = element_text(size=14, face="bold.italic"))
+```
+
+This plot displays how cases and deaths increased daily by approximate 30% at the beginning of the pandemic, and has decayed until reaching levels of daily change of 0.2% and 0.1% for cases and deaths respectively.
+
+Now let's plot the number of daily cases and deaths. 
+
+```{r plots_4, fig.width=7, fig.height=4, warning=FALSE}
 global_summary %>% select("day","cases_day_wa") %>% 
-    ggplot(aes(x=day, y=cases_day_wa)) + geom_line() + xlab("day")
+  ggplot(aes(x=day, y=cases_day_wa)) + 
+  geom_line() + 
+  xlab("day")+ 
+  ylab("Daily infections") +
+  ggtitle("Weekly average of cases per day") +
+  theme(plot.title = element_text(size=14, face="bold.italic"))
 global_summary %>% select("day","deaths_day_wa") %>% 
-    ggplot(aes(x=day, y=deaths_day_wa)) + geom_line() + xlab("day")
+  ggplot(aes(x=day, y=deaths_day_wa)) + 
+  geom_line() + 
+  xlab("day") +
+  ylab("Daily deaths") +
+  ggtitle("Weekly average of deaths per day") +
+  theme(plot.title = element_text(size=14, face="bold.italic"))
+```
+
+In the plot of daily cases a steady increase in all 2020 is shown ending in a peak of cases at the end of the year. During 2021 there were another 2 similar peaks, and then in December the number of cases skyrocketed because of the omicron variant. The plot of daily deaths has some considerable differences including an early peak in April and the absence of immense growth in the end of 2021. The early peak is probably not seen in the cases plot because detection was not as good at the beginning of the pandemic, and there is no mortality increase in the end of 2021 thanks to the rollout of the vaccine and the lower severity of omicron infections. The following plot displays how the measured mortality peaks in April (probably because of lack of diagnostic tools) stabilizes at 2% in 2021 and turn downward in 2022 for the reasons mentioned.
+
+```{r plots_5, fig.width=7, fig.height=4, warning=FALSE}
 global_summary %>% select("day","mortality_rate") %>% 
-    ggplot(aes(x=day, y=mortality_rate)) + geom_line() + xlab("day")
+  ggplot(aes(x=day, y=mortality_rate)) + 
+  geom_line() + 
+  xlab("day") +
+  ylab("Mortality rate (deaths/cases)") +
+  ggtitle("Acumulated mortality") +
+  theme(plot.title = element_text(size=14, face="bold.italic"))
 ```
 
 ## Analysis by country
+Now let's analyze how the outbreak of COVID affected the different countries. Seeking to avoid outliers produced by small countries it was decided to filter all countries with less than 1 million habitants.
 ```{r country_etl}
-summary_total <- summary %>% group_by(Country) %>% summarize(cases=sum(cases_day), deaths=sum(deaths_day),
-                                                     population=mean(Population))
+summary_total <- summary %>% group_by(Country) %>% summarize(
+  cases=sum(cases_day),
+  deaths=sum(deaths_day),
+  population=mean(Population)
+)
 summary_total["mortality_rate"] <- summary_total["deaths"]/summary_total["cases"]
 summary_total["deaths_per_million"] <- 1000000*summary_total["deaths"]/summary_total["population"]
 summary_total["cases_per_million"] <- 1000000*summary_total["cases"]/summary_total["population"]
 summary_total_big <- summary_total %>% filter(population > 1000000)
 ```
 
-### Session info
+Let's organize countries by the normalized amount of deaths, cases and by the mortality rate to see what we can find.
+
+### Least deaths per million people
+```{r tabla_1, render=lemon_print}
+head(summary_total_big[order(summary_total_big$deaths_per_million),],15)
+```
+
+### Most deaths per million people
+```{r tabla_2,render=lemon_print}
+tail(summary_total_big[order(summary_total_big$deaths_per_million),],15)
+```
+
+The countries with higher mortality rates are principally countries from eastern Europe where omicron has been particularly severe, Peru where the health system collapsed catastrophically in the first wave, and countries like Brazil and the USA where distancing and other measures were famously dismissed by their presidents.
+
+On the other hand, very surprisingly the countries with the least number of deaths per million people are African countries with limited exceptions like New Zeland and Tanzania. In  [this](https://www.bbc.com/news/world-africa-54418613) BBC report Anne Soy points to the early adoption of distancing and other measures, the support from the public, the relatively young population, the warmer climate and the good health systems which had previous experience dealing with viruses like Ebola.
+
+Now let's explore the number of reported infections 
+
+### Least reported infections per million people
+```{r tabla_3,render=lemon_print}
+head(summary_total_big[order(summary_total_big$cases_per_million),],15)
+```
+
+### Most reported infections per million people
+```{r tabla_4,render=lemon_print}
+tail(summary_total_big[order(summary_total_big$cases_per_million),],15)
+```
+
+The countries with the least number of reported infections per million are African countries for the reasons commented before and also probably influenced by under reporting. The countries with most number of cases per million are countries from eastern Europe that also have relatively large amounts of deaths, and countries with low deaths per million that did a very good job in testing and isolating infected people.
+
+The two tables below display the countries with higher and lower mortality rates.
+
+### Lower mortality rates
+```{r tabla_5,render=lemon_print}
+head(summary_total_big[order(summary_total_big$mortality_rate),],15)
+```
+
+### Higher mortality rates
+```{r tabla_6,render=lemon_print}
+tail(summary_total_big[order(summary_total_big$mortality_rate),],15)
+```
+
+Assuming the almost certainly incorrect, but not too far from reality claim, that the mortality rate of the virus is homogeneous trough the world, it can be concluded that the reported mortality rates correlate negatively with the effectiveness of the countries testing campaigns, and that the lower mortality rates are close to the virus real mean. The tables above then show how developed Eruopean countries excelled regarding their testing campaigns while countries from Africa, Latin America and the Middle East were not able to diagnosticate their citizens effectively. It can also be concluded that the real mortality of the virus is close to 0.15%.
+
+Finally let's visualize a scatter plot of the deaths vs number of infections per million.
+
+```{r plots_6, fig.width=7, fig.height=4, warning=FALSE}
+summary_total_big %>% select("deaths_per_million","mortality_rate","Country","population") %>% 
+  ggplot(aes(x=mortality_rate, y=deaths_per_million,label=Country)) + 
+  geom_text(
+    aes(label=ifelse(deaths_per_million>3000|mortality_rate>0.035,as.character(Country),'')),
+    size=3,
+    hjust=-0.1, 
+    vjust=-0.1
+  ) +
+  geom_point(aes(size=population)) + 
+  xlab("Mortality rate (deaths/cases)") +
+  ylab("Deaths per million") +
+  xlim(0, 0.1) +
+  ggtitle("Cases vs Deaths per million") +
+  theme(plot.title = element_text(size=14, face="bold.italic"))
+```
+
+The countries that appear lower on the y axis have the lowest number of deaths and represent places where the pandemic had small impact. while the x axis correlates with the inversely with the effectivity of the diagnostic effort of the country. This plot shows a cluster of African countries with high mortality rates and low number of deaths per million and a cluster of eastern European countries with high death toll as discussed before.
+
+This analysis can be deepened by including more variables like economic output, mobility trends, region and vaccination timeline, by using maps.
+
+#### Session info
 ```{r session_info}
 sessionInfo()
 ```
