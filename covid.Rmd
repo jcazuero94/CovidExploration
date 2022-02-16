@@ -18,6 +18,7 @@ library("zoo")
 library("tidyr")
 library("dplyr")
 library("lemon")
+library("lme4")
 ```
 
 
@@ -30,10 +31,12 @@ confirmed_filename <- "csse_covid_19_time_series/time_series_covid19_confirmed_g
 deaths_filename <- "csse_covid_19_time_series/time_series_covid19_deaths_global.csv"
 recovered_filename <- "csse_covid_19_time_series/time_series_covid19_recovered_global.csv"
 regions_filename <- "UID_ISO_FIPS_LookUp_Table.csv"
+iso_codes_url <- "https://github.com/lukes/ISO-3166-Countries-with-Regional-Codes/raw/master/all/all.csv"
 
 cases <- read_csv(paste(base_url,confirmed_filename,access_type,sep=""))
 deaths <- read_csv(paste(base_url,deaths_filename,access_type,sep=""))
 regions <- read_csv(paste(base_url,regions_filename,access_type,sep=""))
+iso_codes <- read_csv(iso_codes_url)
 ```
 
 ## Initial transformations
@@ -51,7 +54,10 @@ deaths <- deaths %>%
     filter(is.na(deaths["Province/State"])) %>% 
     select(-c("Province/State","Lat","Long")) %>%
     gather("day","deaths",-c("Country"))
-regions <- regions %>% filter(is.na(regions["Province_State"])) %>% select("Country","Population")
+regions <- regions %>% filter(is.na(regions["Province_State"])) %>% select("Country","iso3","Population")
+iso_codes <- iso_codes %>% select("alpha-3","region")
+colnames(iso_codes)[colnames(iso_codes) == "alpha-3"] <- "iso3"
+regions <- merge(regions, iso_codes, by="iso3")
 # Merge datasets into summary
 summary <- merge(cases,deaths,by=c("Country","day"))
 summary <- merge(summary,regions,by="Country", all.y = FALSE)
@@ -78,8 +84,13 @@ global_summary <- summary %>% group_by(day) %>% summarize(cases=sum(cases), deat
 global_summary["cases_day_wa"] = rollmean(global_summary["cases_day"],7,c(NA,NULL,NA))
 global_summary["deaths_day_wa"] = rollmean(global_summary["deaths_day"],7,c(NA,NULL,NA))
 global_summary["mortality_rate"] <- global_summary["deaths"]/global_summary["cases"]
+global_summary_region <- summary %>% group_by(day, region) %>% summarize(cases=sum(cases), deaths=sum(deaths),
+                                                         cases_day=sum(cases_day), deaths_day=sum(deaths_day),
+                                                         population=sum(Population))
+global_summary_region['cases_day_per_million'] = 1000000*global_summary_region['cases_day']/global_summary_region['population']
+global_summary_region['deaths_day_per_million'] = 1000000*global_summary_region['deaths_day']/global_summary_region['population']
 ```
-## Global plots
+## Global analysis
 First let's plot the evolution over time of the total number cases and deaths
 
 ```{r plots_1, fig.width=7, fig.height=4, warning=FALSE}
@@ -170,13 +181,35 @@ global_summary %>% select("day","mortality_rate") %>%
   theme(plot.title = element_text(size=14, face="bold.italic"))
 ```
 
+## Analysis by region
+The next two plots show how the pandemic evolved in each continent. The Americas and Europe were the continents that took the most damage as they display more infections and deaths than the other continents. The number of deaths in Europe clearly display 2 valleys while the graph for the Americas is considerably flatter.
+
+```{r plots_region, fig.width=7, fig.height=4, warning=FALSE}
+global_summary_region %>% select("day","cases_day_per_million","region") %>% 
+  ggplot(aes(x=day, y=cases_day_per_million,colour=region)) + 
+  geom_line() + 
+  xlab("day")+ 
+  ylab("Daily infections") +
+  ggtitle("Infections per million people") +
+  theme(plot.title = element_text(size=14, face="bold.italic"))
+global_summary_region %>% select("day","deaths_day_per_million","region") %>% 
+  ggplot(aes(x=day, y=deaths_day_per_million,colour=region)) + 
+  geom_line() + 
+  xlab("day") +
+  ylab("Daily deaths") +
+  ggtitle("Deaths per million people") +
+  theme(plot.title = element_text(size=14, face="bold.italic"))
+```
+
+
 ## Analysis by country
 Now let's analyze how the outbreak of COVID affected the different countries. Seeking to avoid outliers produced by small countries it was decided to filter all countries with less than 1 million habitants.
 ```{r country_etl}
 summary_total <- summary %>% group_by(Country) %>% summarize(
   cases=sum(cases_day),
   deaths=sum(deaths_day),
-  population=mean(Population)
+  population=mean(Population),
+  region=first(region)
 )
 summary_total["mortality_rate"] <- summary_total["deaths"]/summary_total["cases"]
 summary_total["deaths_per_million"] <- 1000000*summary_total["deaths"]/summary_total["population"]
@@ -226,13 +259,13 @@ head(summary_total_big[order(summary_total_big$mortality_rate),],15)
 tail(summary_total_big[order(summary_total_big$mortality_rate),],15)
 ```
 
-Assuming the almost certainly incorrect, but not too far from reality claim, that the mortality rate of the virus is homogeneous trough the world, it can be concluded that the reported mortality rates correlate negatively with the effectiveness of the countries testing campaigns, and that the lower mortality rates are close to the virus real mean. The tables above then show how developed Eruopean countries excelled regarding their testing campaigns while countries from Africa, Latin America and the Middle East were not able to diagnosticate their citizens effectively. It can also be concluded that the real mortality of the virus is close to 0.15%.
+Assuming (probably incorrectly but not to far from reality) that the mortality rate of the virus is homogeneous trough the world, it can be concluded that the reported mortality rates correlate negatively with the effectiveness of the countries testing campaigns, and that the lower mortality rates are close to the virus real mean. The tables above then show how developed countries principaly from Europe and Asia excelled regarding their testing campaigns while countries from Africa, Latin America and the Middle East were not able to diagnosticate their citizens effectively. It can also be concluded that the real mortality of the virus is close to 0.15%.
 
 Finally let's visualize a scatter plot of the deaths vs number of infections per million.
 
 ```{r plots_6, fig.width=7, fig.height=4, warning=FALSE}
-summary_total_big %>% select("deaths_per_million","mortality_rate","Country","population") %>% 
-  ggplot(aes(x=mortality_rate, y=deaths_per_million,label=Country)) + 
+summary_total_big %>% select("deaths_per_million","mortality_rate","Country","population","region") %>% 
+  ggplot(aes(x=mortality_rate, y=deaths_per_million,label=Country,color=region)) + 
   geom_text(
     aes(label=ifelse(deaths_per_million>3000|mortality_rate>0.035,as.character(Country),'')),
     size=3,
@@ -249,7 +282,61 @@ summary_total_big %>% select("deaths_per_million","mortality_rate","Country","po
 
 The countries that appear lower on the y axis have the lowest number of deaths and represent places where the pandemic had small impact. while the x axis correlates with the inversely with the effectivity of the diagnostic effort of the country. This plot shows a cluster of African countries with high mortality rates and low number of deaths per million and a cluster of eastern European countries with high death toll as discussed before.
 
-This analysis can be deepened by including more variables like economic output, mobility trends, region and vaccination timeline, by using maps.
+### Correlation between mortality rates and deaths
+Now let's use a lineal model to model the relation between the mortality rate and the number of deaths per million.
+```{r model}
+lin_reg <- lm(deaths_per_million ~ mortality_rate,data = summary_total_big)
+summary(lin_reg)
+```
+
+This summary shows that the coefficient for mortality rate estimated is not significative, and as seen in the plot below the linear fit is not very good.
+
+```{r prediction, fig.width=7, fig.height=4, warning=FALSE}
+summary_total_big <- summary_total_big %>% mutate(pred=predict(lin_reg))
+summary_total_big %>% select("deaths_per_million","mortality_rate","Country","pred", "region") %>% 
+  ggplot(aes(x=mortality_rate)) + 
+  geom_point(aes(y=deaths_per_million,colour=region)) +
+  geom_point(aes(y=pred),shape=3) + 
+  xlab("Mortality rate (deaths/cases)") +
+  ylab("Deaths per million") +
+  xlim(0, 0.1) +
+  ggtitle("Cases vs Deaths per million") +
+  theme(plot.title = element_text(size=14, face="bold.italic"))
+```
+
+As seen in the previous differents regions of the world seem to have different relations between the mortality rate and the number of deaths per million people. In order to consider this effect in the analysis let's estimate a mixed linear model. By using the lme4 library we can estimate an intercept and coefficient for every region. For more infomation regarding mixed linear models you can refer to the [documentation](https://rdrr.io/cran/lme4/man/lmer.html) of lme4.
+
+```{r mixed_linear_model, warning=FALSE}
+mixed_model <- lmer(deaths_per_million ~  1 + mortality_rate + (1 + mortality_rate|region),summary_total_big)
+summary_total_big["prediction"] = mixed_model %>% predict(summary_total_big)
+summary(mixed_model)
+```
+
+The mixed linear model estimated is based on the asumption that the intercept and coeficient of the mortality rate is composed by a gobal fixed effect and a random effect that has a normal distribution centered at 0. The model also asumes that the residuals are normally distributed and independent of the predicted values. Based on this, lme4 finds a standard error and a t statistic asociated with the fixed effects. The summary of the model show that the intercept is positive and significant at a 95% level, while the coefficient of the mortality rate in only significant at the 80% level. The positive coefficient of the mortality rate indicates that higher mortality rates (posible product of bad diagnostic campaigns) relates to a higher deaths in the country.
+
+The next two plots show that the residuals has relatively low heteroscedasticity and distribute aproximately normal. 
+
+```{r mixed_linear_model_residuals, fig.width=7, fig.height=6, warning=FALSE}
+plot(fitted(mixed_model), resid(mixed_model))
+qqnorm(resid(mixed_model))
+qqline(resid(mixed_model), col="red")
+```
+
+Now let's visualize the resulting regresions for every region.
+
+```{r mixed_linear_model_prediction, fig.width=7, fig.height=6, warning=FALSE}
+summary_total_big %>% select("deaths_per_million","mortality_rate","Country","prediction","region") %>%
+  ggplot(aes(x=mortality_rate)) +
+  geom_point(aes(y=deaths_per_million,colour=region)) +
+  geom_line(aes(y=prediction,colour=region)) +
+  xlab("Mortality rate (deaths/cases)") +
+  ylab("Deaths per million") +
+  xlim(0, 0.1) +
+  ggtitle("Cases vs Deaths per million") +
+  theme(plot.title = element_text(size=14, face="bold.italic"))
+```
+
+The plot before shows a much beter fit than the model that did not consider the region of the country, but it still can be improved. Some ways this analysis can be deepened are including more variables like economic output, mobility trends and a more specific region; by considering the time dimension; by handling outliers like Syria and Afghanistan were war raged during the pandemic, or by including that information in the model.
 
 #### Session info
 ```{r session_info}
