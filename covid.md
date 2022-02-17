@@ -36,6 +36,11 @@ regions <- read_csv(paste(base_url,regions_filename,access_type,sep=""))
 iso_codes <- read_csv(iso_codes_url)
 ```
 
+It is important to note that the database is a compilation from multiple
+sources around the world, and that every country might have diferente
+measuring methodologies and effectiveness. This is an important source
+of bias that has to be accounted for.
+
 ## Initial transformations
 
 ``` r
@@ -282,21 +287,21 @@ head(summary_total_big[order(summary_total_big$deaths_per_million),],15)
 
 | Country                  |  cases | deaths | population | region  | mortality\_rate | deaths\_per\_million | cases\_per\_million |
 |:-------------------------|-------:|-------:|-----------:|:--------|----------------:|---------------------:|--------------------:|
-| Burundi                  |  37923 |     38 |   11890781 | Africa  |       0.0010020 |             3.195753 |           3189.2775 |
-| New Zealand              |  23509 |     53 |    4822233 | Oceania |       0.0022545 |            10.990759 |           4875.1274 |
+| Burundi                  |  37947 |     38 |   11890781 | Africa  |       0.0010014 |             3.195753 |           3191.2958 |
+| New Zealand              |  25050 |     53 |    4822233 | Oceania |       0.0021158 |            10.990759 |           5194.6889 |
 | Chad                     |   7216 |    190 |   16425859 | Africa  |       0.0263304 |            11.567127 |            439.3073 |
-| South Sudan              |  16900 |    137 |   11193729 | Africa  |       0.0081065 |            12.238996 |           1509.7739 |
+| South Sudan              |  16903 |    137 |   11193729 | Africa  |       0.0081051 |            12.238996 |           1510.0419 |
 | Niger                    |   8724 |    303 |   24206636 | Africa  |       0.0347318 |            12.517229 |            360.3970 |
-| Tajikistan               |  17780 |    125 |    9537642 | Asia    |       0.0070304 |            13.105965 |           1864.1924 |
+| Tajikistan               |  17783 |    125 |    9537642 | Asia    |       0.0070292 |            13.105965 |           1864.5070 |
 | Tanzania                 |  33549 |    796 |   59734213 | Africa  |       0.0237265 |            13.325697 |            561.6379 |
-| Benin                    |  26552 |    163 |   12123198 | Africa  |       0.0061389 |            13.445297 |           2190.1812 |
-| Congo (Kinshasa)         |  85793 |   1316 |   89561404 | Africa  |       0.0153392 |            14.693829 |            957.9238 |
-| Nigeria                  | 254124 |   3141 |  206139587 | Africa  |       0.0123601 |            15.237248 |           1232.7763 |
-| Sierra Leone             |   7659 |    125 |    7976985 | Africa  |       0.0163207 |            15.670081 |            960.1372 |
-| Burkina Faso             |  20725 |    375 |   20903278 | Africa  |       0.0180941 |            17.939770 |            991.4713 |
+| Benin                    |  26567 |    163 |   12123198 | Africa  |       0.0061354 |            13.445297 |           2191.4185 |
+| Congo (Kinshasa)         |  85822 |   1316 |   89561404 | Africa  |       0.0153341 |            14.693829 |            958.2476 |
+| Nigeria                  | 254137 |   3141 |  206139587 | Africa  |       0.0123595 |            15.237248 |           1232.8394 |
+| Sierra Leone             |   7661 |    125 |    7976985 | Africa  |       0.0163164 |            15.670081 |            960.3879 |
+| Burkina Faso             |  20729 |    375 |   20903278 | Africa  |       0.0180906 |            17.939770 |            991.6626 |
 | Central African Republic |  14187 |    113 |    4829764 | Africa  |       0.0079650 |            23.396588 |           2937.4106 |
-| Eritrea                  |   9679 |    103 |    3546427 | Africa  |       0.0106416 |            29.043316 |           2729.2258 |
-| Cote d’Ivoire            |  81237 |    791 |   26378275 | Africa  |       0.0097369 |            29.986798 |           3079.6934 |
+| Eritrea                  |   9680 |    103 |    3546427 | Africa  |       0.0106405 |            29.043316 |           2729.5078 |
+| Cote d’Ivoire            |  81253 |    791 |   26378275 | Africa  |       0.0097350 |            29.986798 |           3080.3000 |
 
 ### Most deaths per million people
 
@@ -306,20 +311,20 @@ tail(summary_total_big[order(summary_total_big$deaths_per_million),],15)
 
 | Country                |    cases | deaths | population | region   | mortality\_rate | deaths\_per\_million | cases\_per\_million |
 |:-----------------------|---------:|-------:|-----------:|:---------|----------------:|---------------------:|--------------------:|
-| US                     | 78036351 | 925435 |  329466283 | Americas |       0.0118590 |             2808.891 |            236856.9 |
-| Poland                 |  5408754 | 108515 |   37846605 | Europe   |       0.0200628 |             2867.232 |            142912.5 |
-| Slovenia               |   858670 |   6122 |    2078932 | Europe   |       0.0071296 |             2944.781 |            413034.2 |
-| Lithuania              |   826841 |   8172 |    2722291 | Europe   |       0.0098834 |             3001.883 |            303729.8 |
-| Brazil                 | 27677468 | 640076 |  212559409 | Americas |       0.0231262 |             3011.280 |            130210.5 |
-| Romania                |  2596269 |  61880 |   19237682 | Europe   |       0.0238342 |             3216.604 |            134957.5 |
-| Slovakia               |  1891646 |  18123 |    5459643 | Europe   |       0.0095805 |             3319.448 |            346478.0 |
+| US                     | 78172839 | 928518 |  329466283 | Americas |       0.0118778 |             2818.249 |            237271.1 |
+| Poland                 |  5434424 | 108887 |   37846605 | Europe   |       0.0200365 |             2877.061 |            143590.8 |
+| Slovenia               |   863461 |   6137 |    2078932 | Europe   |       0.0071074 |             2951.997 |            415338.7 |
+| Lithuania              |   835403 |   8200 |    2722291 | Europe   |       0.0098156 |             3012.169 |            306875.0 |
+| Brazil                 | 27819996 | 641096 |  212559409 | Americas |       0.0230444 |             3016.079 |            130881.0 |
+| Romania                |  2613716 |  62063 |   19237682 | Europe   |       0.0237451 |             3226.116 |            135864.4 |
+| Slovakia               |  1920150 |  18145 |    5459643 | Europe   |       0.0094498 |             3323.477 |            351698.8 |
 | Czechia                |  3451318 |  37991 |   10708982 | Europe   |       0.0110077 |             3547.583 |            322282.5 |
-| Croatia                |  1021777 |  14584 |    4105268 | Europe   |       0.0142732 |             3552.509 |            248894.1 |
-| Georgia                |  1480841 |  15628 |    3989175 | Asia     |       0.0105535 |             3917.602 |            371214.9 |
-| North Macedonia        |   288750 |   8793 |    2083380 | Europe   |       0.0304519 |             4220.545 |            138596.9 |
-| Hungary                |  1721483 |  42754 |    9660350 | Europe   |       0.0248356 |             4425.720 |            178200.9 |
-| Bosnia and Herzegovina |   365589 |  15127 |    3280815 | Europe   |       0.0413771 |             4610.745 |            111432.4 |
-| Bulgaria               |  1049543 |  34686 |    6948445 | Europe   |       0.0330487 |             4991.908 |            151047.2 |
+| Croatia                |  1027572 |  14632 |    4105268 | Europe   |       0.0142394 |             3564.201 |            250305.7 |
+| Georgia                |  1496156 |  15683 |    3989175 | Asia     |       0.0104822 |             3931.389 |            375054.0 |
+| North Macedonia        |   289797 |   8829 |    2083380 | Europe   |       0.0304662 |             4237.825 |            139099.4 |
+| Hungary                |  1730366 |  42851 |    9660350 | Europe   |       0.0247641 |             4435.761 |            179120.4 |
+| Bosnia and Herzegovina |   366450 |  15162 |    3280815 | Europe   |       0.0413754 |             4621.413 |            111694.8 |
+| Bulgaria               |  1054566 |  34779 |    6948445 | Europe   |       0.0329794 |             5005.293 |            151770.1 |
 | Peru                   |  3456789 | 208622 |   32971846 | Americas |       0.0603514 |             6327.277 |            104840.6 |
 
 The countries with higher mortality rates are principally countries from
@@ -348,20 +353,20 @@ head(summary_total_big[order(summary_total_big$cases_per_million),],15)
 | Country          |  cases | deaths | population | region | mortality\_rate | deaths\_per\_million | cases\_per\_million |
 |:-----------------|-------:|-------:|-----------:|:-------|----------------:|---------------------:|--------------------:|
 | Niger            |   8724 |    303 |   24206636 | Africa |       0.0347318 |             12.51723 |            360.3970 |
-| Yemen            |  11699 |   2107 |   29825968 | Asia   |       0.1801009 |             70.64314 |            392.2421 |
+| Yemen            |  11707 |   2113 |   29825968 | Asia   |       0.1804903 |             70.84431 |            392.5103 |
 | Chad             |   7216 |    190 |   16425859 | Africa |       0.0263304 |             11.56713 |            439.3073 |
 | Tanzania         |  33549 |    796 |   59734213 | Africa |       0.0237265 |             13.32570 |            561.6379 |
-| Taiwan\*         |  19665 |    852 |   23816775 | Asia   |       0.0433257 |             35.77311 |            825.6785 |
-| Congo (Kinshasa) |  85793 |   1316 |   89561404 | Africa |       0.0153392 |             14.69383 |            957.9238 |
-| Sierra Leone     |   7659 |    125 |    7976985 | Africa |       0.0163207 |             15.67008 |            960.1372 |
-| Burkina Faso     |  20725 |    375 |   20903278 | Africa |       0.0180941 |             17.93977 |            991.4713 |
-| Nigeria          | 254124 |   3141 |  206139587 | Africa |       0.0123601 |             15.23725 |           1232.7763 |
-| Sudan            |  59903 |   3831 |   43849269 | Africa |       0.0639534 |             87.36748 |           1366.1117 |
+| Taiwan\*         |  19731 |    852 |   23816775 | Asia   |       0.0431808 |             35.77311 |            828.4497 |
+| Congo (Kinshasa) |  85822 |   1316 |   89561404 | Africa |       0.0153341 |             14.69383 |            958.2476 |
+| Sierra Leone     |   7661 |    125 |    7976985 | Africa |       0.0163164 |             15.67008 |            960.3879 |
+| Burkina Faso     |  20729 |    375 |   20903278 | Africa |       0.0180906 |             17.93977 |            991.6626 |
+| Nigeria          | 254137 |   3141 |  206139587 | Africa |       0.0123595 |             15.23725 |           1232.8394 |
+| Sudan            |  59939 |   3831 |   43849269 | Africa |       0.0639150 |             87.36748 |           1366.9327 |
 | Liberia          |   7360 |    290 |    5057677 | Africa |       0.0394022 |             57.33858 |           1455.2135 |
-| Mali             |  30286 |    717 |   20250834 | Africa |       0.0236743 |             35.40595 |           1495.5433 |
-| South Sudan      |  16900 |    137 |   11193729 | Africa |       0.0081065 |             12.23900 |           1509.7739 |
+| Mali             |  30303 |    717 |   20250834 | Africa |       0.0236610 |             35.40595 |           1496.3828 |
+| South Sudan      |  16903 |    137 |   11193729 | Africa |       0.0081051 |             12.23900 |           1510.0419 |
 | Somalia          |  26260 |   1345 |   15893219 | Africa |       0.0512186 |             84.62729 |           1652.2770 |
-| Tajikistan       |  17780 |    125 |    9537642 | Asia   |       0.0070304 |             13.10596 |           1864.1924 |
+| Tajikistan       |  17783 |    125 |    9537642 | Asia   |       0.0070292 |             13.10596 |           1864.5070 |
 
 ### Most reported infections per million people
 
@@ -371,21 +376,21 @@ tail(summary_total_big[order(summary_total_big$cases_per_million),],15)
 
 | Country     |    cases | deaths | population | region | mortality\_rate | deaths\_per\_million | cases\_per\_million |
 |:------------|---------:|-------:|-----------:|:-------|----------------:|---------------------:|--------------------:|
-| Bahrain     |   473462 |   1429 |    1701583 | Asia   |       0.0030182 |             839.8062 |            278248.0 |
-| Latvia      |   533871 |   5041 |    1886202 | Europe |       0.0094424 |            2672.5664 |            283040.2 |
-| Belgium     |  3460301 |  29778 |   11492641 | Europe |       0.0086056 |            2591.0494 |            301088.4 |
-| Switzerland |  2607052 |  12975 |    8654618 | Europe |       0.0049769 |            1499.1996 |            301232.5 |
-| Lithuania   |   826841 |   8172 |    2722291 | Europe |       0.0098834 |            3001.8833 |            303729.8 |
-| Portugal    |  3111858 |  20620 |   10196707 | Europe |       0.0066263 |            2022.2215 |            305182.6 |
-| Estonia     |   427010 |   2122 |    1326539 | Europe |       0.0049694 |            1599.6514 |            321897.8 |
+| Bahrain     |   477750 |   1432 |    1701583 | Asia   |       0.0029974 |             841.5693 |            280768.0 |
+| Latvia      |   545296 |   5061 |    1886202 | Europe |       0.0092812 |            2683.1697 |            289097.4 |
+| Belgium     |  3473015 |  29832 |   11492641 | Europe |       0.0085897 |            2595.7480 |            302194.7 |
+| Switzerland |  2628093 |  12979 |    8654618 | Europe |       0.0049386 |            1499.6618 |            303663.7 |
+| Lithuania   |   835403 |   8200 |    2722291 | Europe |       0.0098156 |            3012.1688 |            306875.0 |
+| Portugal    |  3131899 |  20666 |   10196707 | Europe |       0.0065986 |            2026.7327 |            307148.1 |
 | Czechia     |  3451318 |  37991 |   10708982 | Europe |       0.0110077 |            3547.5828 |            322282.5 |
-| France      | 21186090 | 132323 |   65249843 | Europe |       0.0062457 |            2027.9436 |            324691.8 |
-| Netherlands |  5842989 |  21414 |   17134873 | Europe |       0.0036649 |            1249.7321 |            340999.8 |
-| Slovakia    |  1891646 |  18123 |    5459643 | Europe |       0.0095805 |            3319.4478 |            346478.0 |
-| Georgia     |  1480841 |  15628 |    3989175 | Asia   |       0.0105535 |            3917.6020 |            371214.9 |
-| Israel      |  3474120 |   9651 |    8655541 | Asia   |       0.0027780 |            1115.0083 |            401375.3 |
-| Denmark     |  2399851 |   4139 |    5837213 | Europe |       0.0017247 |             709.0713 |            411129.6 |
-| Slovenia    |   858670 |   6122 |    2078932 | Europe |       0.0071296 |            2944.7813 |            413034.2 |
+| France      | 21397630 | 132932 |   65249843 | Europe |       0.0062125 |            2037.2769 |            327933.8 |
+| Estonia     |   435448 |   2139 |    1326539 | Europe |       0.0049122 |            1612.4667 |            328258.7 |
+| Netherlands |  5906860 |  21432 |   17134873 | Europe |       0.0036283 |            1250.7825 |            344727.4 |
+| Slovakia    |  1920150 |  18145 |    5459643 | Europe |       0.0094498 |            3323.4774 |            351698.8 |
+| Georgia     |  1496156 |  15683 |    3989175 | Asia   |       0.0104822 |            3931.3893 |            375054.0 |
+| Israel      |  3491958 |   9687 |    8655541 | Asia   |       0.0027741 |            1119.1675 |            403436.1 |
+| Slovenia    |   863461 |   6137 |    2078932 | Europe |       0.0071074 |            2951.9965 |            415338.7 |
+| Denmark     |  2442799 |   4163 |    5837213 | Europe |       0.0017042 |             713.1828 |            418487.2 |
 
 The countries with the least number of reported infections per million
 are African countries for the reasons commented before and also probably
@@ -405,21 +410,21 @@ head(summary_total_big[order(summary_total_big$mortality_rate),],15)
 
 | Country              |   cases | deaths | population | region  | mortality\_rate | deaths\_per\_million | cases\_per\_million |
 |:---------------------|--------:|-------:|-----------:|:--------|----------------:|---------------------:|--------------------:|
-| Burundi              |   37923 |     38 |   11890781 | Africa  |       0.0010020 |             3.195753 |            3189.277 |
-| Norway               | 1068686 |   1513 |    5421242 | Europe  |       0.0014158 |           279.087338 |          197129.366 |
-| Denmark              | 2399851 |   4139 |    5837213 | Europe  |       0.0017247 |           709.071264 |          411129.592 |
-| Singapore            |  497997 |    913 |    5850343 | Asia    |       0.0018333 |           156.059226 |           85122.701 |
-| Qatar                |  351949 |    658 |    2881060 | Asia    |       0.0018696 |           228.388163 |          122159.552 |
-| New Zealand          |   23509 |     53 |    4822233 | Oceania |       0.0022545 |            10.990759 |            4875.127 |
-| Mongolia             |  888363 |   2149 |    3278292 | Asia    |       0.0024191 |           655.524279 |          270983.488 |
-| United Arab Emirates |  870358 |   2288 |    9890400 | Asia    |       0.0026288 |           231.335436 |           88000.283 |
-| Cyprus               |  295686 |    791 |    1207361 | Asia    |       0.0026751 |           655.147880 |          244902.726 |
-| Israel               | 3474120 |   9651 |    8655541 | Asia    |       0.0027780 |          1115.008294 |          401375.258 |
-| Bahrain              |  473462 |   1429 |    1701583 | Asia    |       0.0030182 |           839.806227 |          278247.961 |
-| Netherlands          | 5842989 |  21414 |   17134873 | Europe  |       0.0036649 |          1249.732052 |          340999.843 |
-| Finland              |  586809 |   2215 |    5540718 | Europe  |       0.0037747 |           399.767683 |          105908.476 |
-| Kuwait               |  606035 |   2522 |    4270563 | Asia    |       0.0041615 |           590.554454 |          141909.861 |
-| Laos                 |  139685 |    598 |    7275556 | Asia    |       0.0042811 |            82.193031 |           19199.220 |
+| Burundi              |   37947 |     38 |   11890781 | Africa  |       0.0010014 |             3.195753 |            3191.296 |
+| Norway               | 1086614 |   1548 |    5421242 | Europe  |       0.0014246 |           285.543423 |          200436.358 |
+| Denmark              | 2442799 |   4163 |    5837213 | Europe  |       0.0017042 |           713.182815 |          418487.213 |
+| Singapore            |  514880 |    926 |    5850343 | Asia    |       0.0017985 |           158.281318 |           88008.515 |
+| Qatar                |  352447 |    658 |    2881060 | Asia    |       0.0018669 |           228.388163 |          122332.405 |
+| New Zealand          |   25050 |     53 |    4822233 | Oceania |       0.0021158 |            10.990759 |            5194.689 |
+| Mongolia             |  891267 |   2152 |    3278292 | Asia    |       0.0024145 |           656.439390 |          271869.315 |
+| United Arab Emirates |  871315 |   2289 |    9890400 | Asia    |       0.0026271 |           231.436544 |           88097.044 |
+| Cyprus               |  298235 |    798 |    1207361 | Asia    |       0.0026757 |           660.945649 |          247013.942 |
+| Israel               | 3491958 |   9687 |    8655541 | Asia    |       0.0027741 |          1119.167479 |          403436.134 |
+| Bahrain              |  477750 |   1432 |    1701583 | Asia    |       0.0029974 |           841.569292 |          280767.967 |
+| Netherlands          | 5906860 |  21432 |   17134873 | Europe  |       0.0036283 |          1250.782541 |          344727.387 |
+| Finland              |  592765 |   2242 |    5540718 | Europe  |       0.0037823 |           404.640698 |          106983.427 |
+| Kuwait               |  607952 |   2524 |    4270563 | Asia    |       0.0041516 |           591.022776 |          142358.748 |
+| Laos                 |  140030 |    602 |    7275556 | Asia    |       0.0042991 |            82.742817 |           19246.639 |
 
 ### Higher mortality rates
 
@@ -429,21 +434,21 @@ tail(summary_total_big[order(summary_total_big$mortality_rate),],15)
 
 | Country                |   cases | deaths | population | region   | mortality\_rate | deaths\_per\_million | cases\_per\_million |
 |:-----------------------|--------:|-------:|-----------:|:---------|----------------:|---------------------:|--------------------:|
-| Bulgaria               | 1049543 |  34686 |    6948445 | Europe   |       0.0330487 |           4991.90826 |         151047.1767 |
+| Bulgaria               | 1054566 |  34779 |    6948445 | Europe   |       0.0329794 |           5005.29255 |         151770.0723 |
 | Niger                  |    8724 |    303 |   24206636 | Africa   |       0.0347318 |             12.51723 |            360.3970 |
-| Burma                  |  550824 |  19314 |   54409794 | Asia     |       0.0350638 |            354.97286 |          10123.6186 |
+| Burma                  |  553564 |  19318 |   54409794 | Asia     |       0.0348975 |            355.04637 |          10173.9771 |
 | Liberia                |    7360 |    290 |    5057677 | Africa   |       0.0394022 |             57.33858 |           1455.2135 |
-| Bosnia and Herzegovina |  365589 |  15127 |    3280815 | Europe   |       0.0413771 |           4610.74459 |         111432.3727 |
-| Taiwan\*               |   19665 |    852 |   23816775 | Asia     |       0.0433257 |             35.77311 |            825.6785 |
-| Afghanistan            |  171422 |   7504 |   38928341 | Asia     |       0.0437750 |            192.76444 |           4403.5270 |
+| Bosnia and Herzegovina |  366450 |  15162 |    3280815 | Europe   |       0.0413754 |           4621.41267 |         111694.8075 |
+| Taiwan\*               |   19731 |    852 |   23816775 | Asia     |       0.0431808 |             35.77311 |            828.4497 |
 | Ecuador                |  800320 |  35038 |   17643060 | Americas |       0.0437800 |           1985.93668 |          45361.7456 |
-| Egypt                  |  459198 |  23465 |  102334403 | Africa   |       0.0511000 |            229.29728 |           4487.2300 |
+| Afghanistan            |  171519 |   7513 |   38928341 | Asia     |       0.0438027 |            192.99564 |           4406.0187 |
+| Egypt                  |  461299 |  23519 |  102334403 | Africa   |       0.0509843 |            229.82496 |           4507.7607 |
 | Somalia                |   26260 |   1345 |   15893219 | Africa   |       0.0512186 |             84.62729 |           1652.2770 |
-| Syria                  |   53011 |   3035 |   17500657 | Asia     |       0.0572523 |            173.42206 |           3029.0863 |
-| Mexico                 | 5300537 | 312965 |  127792286 | Americas |       0.0590440 |           2449.01324 |          41477.7540 |
+| Syria                  |   53148 |   3038 |   17500657 | Asia     |       0.0571611 |            173.59348 |           3036.9146 |
+| Mexico                 | 5344840 | 314128 |  127792286 | Americas |       0.0587722 |           2458.11394 |          41824.4338 |
 | Peru                   | 3456789 | 208622 |   32971846 | Americas |       0.0603514 |           6327.27691 |         104840.6268 |
-| Sudan                  |   59903 |   3831 |   43849269 | Africa   |       0.0639534 |             87.36748 |           1366.1117 |
-| Yemen                  |   11699 |   2107 |   29825968 | Asia     |       0.1801009 |             70.64314 |            392.2421 |
+| Sudan                  |   59939 |   3831 |   43849269 | Africa   |       0.0639150 |             87.36748 |           1366.9327 |
+| Yemen                  |   11707 |   2113 |   29825968 | Asia     |       0.1804903 |             70.84431 |            392.5103 |
 
 Assuming (probably incorrectly but not to far from reality) that the
 mortality rate of the virus is homogeneous trough the world, it can be
@@ -502,18 +507,18 @@ summary(lin_reg)
     ## 
     ## Residuals:
     ##     Min      1Q  Median      3Q     Max 
-    ## -1795.7  -994.1  -471.7   651.6  5038.9 
+    ## -1790.1  -996.3  -473.6   653.6  5038.8 
     ## 
     ## Coefficients:
     ##                Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)       997.0      141.4   7.049 6.14e-11 ***
-    ## mortality_rate   4827.1     5544.6   0.871    0.385    
+    ## (Intercept)      1000.9      141.6   7.069  5.5e-11 ***
+    ## mortality_rate   4765.3     5553.1   0.858    0.392    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 1245 on 150 degrees of freedom
-    ## Multiple R-squared:  0.005028,   Adjusted R-squared:  -0.001605 
-    ## F-statistic: 0.758 on 1 and 150 DF,  p-value: 0.3854
+    ## Residual standard error: 1247 on 150 degrees of freedom
+    ## Multiple R-squared:  0.004885,   Adjusted R-squared:  -0.001749 
+    ## F-statistic: 0.7364 on 1 and 150 DF,  p-value: 0.3922
 
 This summary shows that the coefficient for mortality rate estimated is
 not significative, and as seen in the plot below the linear fit is not
@@ -553,29 +558,30 @@ summary(mixed_model)
     ##     region)
     ##    Data: summary_total_big
     ## 
-    ## REML criterion at convergence: 2429.9
+    ## REML criterion at convergence: 2431
     ## 
     ## Scaled residuals: 
     ##     Min      1Q  Median      3Q     Max 
-    ## -2.5989 -0.4533 -0.2594  0.4039  4.4307 
+    ## -2.5912 -0.5174 -0.2389  0.3966  4.4828 
     ## 
     ## Random effects:
     ##  Groups   Name           Variance  Std.Dev. Corr
-    ##  region   (Intercept)    1.146e+05   338.5      
-    ##           mortality_rate 2.353e+09 48510.0  0.85
-    ##  Residual                5.598e+05   748.2      
+    ##  region   (Intercept)    7.345e+04   271.0      
+    ##           mortality_rate 2.307e+09 48026.5  1.00
+    ##  Residual                5.697e+05   754.8      
     ## Number of obs: 152, groups:  region, 5
     ## 
     ## Fixed effects:
     ##                Estimate Std. Error t value
-    ## (Intercept)       650.6      183.8   3.539
-    ## mortality_rate  26253.6    22910.9   1.146
+    ## (Intercept)       695.2      154.1   4.513
+    ## mortality_rate  24407.7    22592.9   1.080
     ## 
     ## Correlation of Fixed Effects:
     ##             (Intr)
-    ## mortalty_rt 0.611 
+    ## mortalty_rt 0.710 
     ## convergence code: 0
-    ## Model failed to converge with max|grad| = 0.00640266 (tol = 0.002, component 1)
+    ## unable to evaluate scaled gradient
+    ## Model failed to converge: degenerate  Hessian with 1 negative eigenvalues
 
 The mixed linear model estimated is based on the asumption that the
 intercept and coeficient of the mortality rate is composed by a gobal
@@ -622,12 +628,17 @@ summary_total_big %>% select("deaths_per_million","mortality_rate","Country","pr
 ![](covid_files/figure-gfm/mixed_linear_model_prediction-1.png)<!-- -->
 
 The plot before shows a much beter fit than the model that did not
-consider the region of the country, but it still can be improved. Some
-ways this analysis can be deepened are including more variables like
-economic output, mobility trends and a more specific region; by
-considering the time dimension; by handling outliers like Syria and
-Afghanistan were war raged during the pandemic, or by including that
-information in the model.
+consider the region of the country, but it still can be improved. This
+analysis hints of a positive correlation between mortality rate and
+deaths per million in Europe and the Americas, while in Africa, Asia and
+Oceania no correlation was captured. This does not imply that there is
+no relation between the two variables, including some predictive unused
+attribute might reduce the error and reveal a stronger relation between
+the pandemic statistics analyzed. So in order to deepen this analysis
+one might add other variables like economic output, mobility trends and
+a more specific region. Another possible next steps are consider the
+time dimension, handle outliers like Syria and Afghanistan were war
+raged during the pandemic, or include that information in the model.
 
 #### Session info
 
