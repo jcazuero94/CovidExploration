@@ -637,7 +637,7 @@ attribute might reduce the error and reveal a stronger relation between
 the pandemic statistics analyzed. So in order to deepen this analysis
 one might add other variables like economic output, mobility trends and
 a more specific region. Another possible next steps are consider the
-time dimension, handle outliers like Syria and Afghanistan were war
+time dimension, handle outliers like Syria and Afghanistan where war
 raged during the pandemic, or include that information in the model.
 
 #### Session info
