@@ -133,16 +133,16 @@ nypd_shooting_data['OCCUR_HOUR'] <- nypd_shooting_data["OCCUR_TIME"] %>% apply(1
 ```
 
 ## Maps
-Lets visualize the spatial distribution of cases.
+Lets visualize the spatial distribution of cases. (commented as it does not work in github README.md)
 ```{r maps}
-nypd_shooting_data %>%
-  select("Latitude","Longitude") %>%
-  rename("lat" = "Latitude") %>%
-  rename("long"="Longitude") %>%
-  leaflet( width = 900) %>%
-  addTiles() %>%
-  #addHeatmap(group="heat", max=.6, blur = 60)
-  addMarkers(clusterOptions = markerClusterOptions())
+#nypd_shooting_data %>%
+#  select("Latitude","Longitude") %>%
+#  rename("lat" = "Latitude") %>%
+#  rename("long"="Longitude") %>%
+#  leaflet( width = 900) %>%
+#  addTiles() %>%
+#  #addHeatmap(group="heat", max=.6, blur = 60)
+#  addMarkers(clusterOptions = markerClusterOptions())
 ```
 As shown in the plot above Staten Island has a small amount of incidents while The Bronx and Brooklin are very violent.
 
