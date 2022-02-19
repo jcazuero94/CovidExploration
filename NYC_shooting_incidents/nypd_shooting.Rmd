@@ -1,0 +1,233 @@
+---
+title: "NYC shooting incidents"
+author: "Juan Camilo Azuero"
+date: "1/25/2022"
+output: github_document
+always_allow_html: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+In this project we are going to analyze ths distribution of shooting incidents over time in New York City. 
+
+## Import libraries
+```{r import_libraries}
+library("tidyverse")
+library("lubridate")
+library("leaflet")
+library("forecast")
+library("prophet")
+library("zoo")
+```
+
+
+## Import data
+Data is imported from a public api of NYC 
+```{r import_data}
+nypd_shooting_data <- read_csv("https://data.cityofnewyork.us/api/views/833y-fsy8/rows.csv?accessType=DOWNLOAD")
+```
+
+## Format variables
+```{r format_columns}
+nypd_shooting_data <-nypd_shooting_data %>% mutate(OCCUR_DATE=mdy(OCCUR_DATE))
+```
+
+## Select columns
+```{r select_columns}
+cols_to_keep <- c("OCCUR_DATE",
+                  "OCCUR_TIME",
+                  "BORO",
+                  "PRECINCT",
+                  "LOCATION_DESC",
+                  "STATISTICAL_MURDER_FLAG",
+                  "PERP_AGE_GROUP",
+                  "PERP_SEX",
+                  "PERP_RACE",
+                  "VIC_AGE_GROUP",
+                  "VIC_SEX",
+                  "VIC_RACE",
+                  "Latitude",
+                  "Longitude"
+                 )
+nypd_shooting_data <- nypd_shooting_data %>% select(cols_to_keep)
+```
+
+## Clean column values
+```{r clean_column_values}
+# Location
+clasify_location <- function(location) {
+    if((location =="NONE") | is.na(location)){
+        return("NA")
+    } 
+    if(location %in% c("BANK","CHECK CASH","LOAN COMPANY","ATM","")){
+        return("Financial_institution")
+    }
+    if(location %in% c("MULTI DWELL - PUBLIC HOUS","MULTI DWELL - APT BUILD","PVT HOUSE")){
+        return("Housing")
+    }
+    if(location %in% c("DOCTOR/DENTIST","GYM/FITNESS FACILITY","HOSPITAL",
+                       "SCHOOL","HOTEL/MOTEL","SOCIAL CLUB/POLICY LOCATI",
+                       "BAR/NIGHT CLUB","FACTORY/WAREHOUSE","STORAGE FACILITY")){
+        return("Other")
+    }
+    if(location %in% c("GROCERY/BODEGA","FAST FOOD","COMMERCIAL BLDG","RESTAURANT/DINER",
+                       "CLOTHING BOUTIQUE","SMALL MERCHANT","LIQUOR STORE","SUPERMARKET",
+                       "BEAUTY/NAIL SALON","SHOE STORE","DRY CLEANER/LAUNDRY","DEPT STORE",
+                       "GAS STATION","PHOTO/COPY STORE","VIDEO STORE","STORE UNCLASSIFIED",
+                       "CHAIN STORE","DRUG STORE","TELECOMM. STORE","JEWELRY STORE",
+                       "CANDY STORE","VARIETY STORE")){
+        return("Commercial")
+    }
+    return("Otro no encontrado")
+    
+}
+nypd_shooting_data["LOCATION_DESC"] <-nypd_shooting_data["LOCATION_DESC"] %>% apply(1,clasify_location)
+distinct(nypd_shooting_data['LOCATION_DESC'])
+# Age
+clasify_age_group <- function(age_group) {
+    if((age_group =="UNKNOWN") | is.na(age_group)){
+        return("UNKNOWN")
+    } 
+    if(age_group %in% c("<18","18-24","25-44","45-64","65+")){
+        return(age_group)
+    }
+    return("UNKNOWN")
+    
+}
+nypd_shooting_data["PERP_AGE_GROUP"] <-nypd_shooting_data["PERP_AGE_GROUP"] %>% apply(1,clasify_age_group)
+distinct(nypd_shooting_data['PERP_AGE_GROUP'])
+nypd_shooting_data["VIC_AGE_GROUP"] <-nypd_shooting_data["VIC_AGE_GROUP"] %>% apply(1,clasify_age_group)
+distinct(nypd_shooting_data['VIC_AGE_GROUP'])
+# Sex
+clean_sex <- function(sex) {
+    if(sex %in% c("M","F")){
+        return(sex)
+    }
+    return("U")
+    
+}
+nypd_shooting_data["VIC_SEX"] <-nypd_shooting_data["VIC_SEX"] %>% apply(1,clean_sex)
+distinct(nypd_shooting_data['VIC_SEX'])
+nypd_shooting_data["PERP_SEX"] <-nypd_shooting_data["PERP_SEX"] %>% apply(1,clean_sex)
+distinct(nypd_shooting_data['PERP_SEX'])
+# Race
+clean_race <- function(race) {
+    if(is.na(race)){
+        return("UNKNOWN")
+    }
+    return(race)
+    
+}
+nypd_shooting_data["PERP_RACE"] <-nypd_shooting_data["PERP_RACE"] %>% apply(1,clean_race)
+distinct(nypd_shooting_data['PERP_RACE'])
+distinct(nypd_shooting_data['VIC_RACE'])
+# Extract hour of the day when the incident took place
+get_hour <- function(time) {
+    return(hour(hms(time))) 
+}
+nypd_shooting_data['OCCUR_HOUR'] <- nypd_shooting_data["OCCUR_TIME"] %>% apply(1,get_hour)
+
+```
+
+## Maps
+Lets visualize the spatial distribution of cases.
+```{r maps}
+nypd_shooting_data %>%
+  select("Latitude","Longitude") %>%
+  rename("lat" = "Latitude") %>%
+  rename("long"="Longitude") %>%
+  leaflet( width = 900) %>%
+  addTiles() %>%
+  #addHeatmap(group="heat", max=.6, blur = 60)
+  addMarkers(clusterOptions = markerClusterOptions())
+```
+As shown in the plot above Staten Island has a small amount of incidents while The Bronx and Brooklin are very violent.
+
+## Average cases
+Now lets visualize the evolution of shooting incidents through time
+```{r incidents_time, fig.width=7, fig.height=4}
+cases_by_day <- nypd_shooting_data %>%  count(OCCUR_DATE)
+# Moving averages
+cases_by_day['month_ma'] <- rollmean(cases_by_day['n'],30,c(NA,NULL,NA))
+cases_by_day['year_ma'] <- rollmean(cases_by_day['n'],365,c(NA,NULL,NA))
+ggplot(aes(x=OCCUR_DATE,y=n),data=cases_by_day) +
+  geom_col(color="grey")+
+  geom_line(aes(y = month_ma), color = "red", size = 0.1)+ 
+  geom_line(aes(y = year_ma), color = "blue", size = 0.1)+ 
+  labs(y='Cases by day',title="Shootings reported by day")
+```
+<br>
+As the yearly mooving average shows, the cases have a descending trend since 2006. The monthly mooving average also hints of a yearly seasonality that will be explored in more detail next.
+<br>
+It can also be seen a spike in shooting incidents in 2020 correlating with the covid outbreak. Although the correlation seems evident, a causal relation cannot be infered with the information available.
+<br>
+To explore in more detail the descending trend observed and the yearly stationality, incidents from 2020 are dropped because of the unexplained peak.
+```{r average_cases_year, fig.width=7, fig.height=4}
+cases_by_day['OCCUR_YEAR'] <- cases_by_day['OCCUR_DATE'] %>% apply(1,year)
+average_cases_by_year <- cases_by_day %>% filter(OCCUR_YEAR != 2020) %>% 
+    group_by(OCCUR_YEAR) %>% summarise(cases=mean(n))
+ggplot(aes(x=OCCUR_YEAR,y=cases),data=average_cases_by_year) +
+  geom_col(fill="blue")
+```
+
+The number of average cases per day have almost halved in 13 years going from 5.7 in 2006 to 3.1 in 2019.
+
+```{r average_cases_month, fig.width=7, fig.height=4}
+cases_by_day['OCCUR_MONTH'] <- cases_by_day['OCCUR_DATE'] %>% apply(1,month)
+average_cases_by_month <- cases_by_day %>% filter(OCCUR_YEAR != 2020) %>% 
+    group_by(OCCUR_MONTH) %>% summarise(cases=mean(n))
+ggplot(aes(x=OCCUR_MONTH,y=cases),data=average_cases_by_month) +
+  geom_col(fill="blue")
+```
+
+The months with less shooting incidents are february and march averaging 3.4 cases per day, while july and august are the most violent months with a mean of 5.9 cases per day.
+
+Looking to explore in more detail the evolution of cases through time, lets estimate a model using the library prophet. Prophet is an open source library devoloped by Meta to model time series. It has a curve fitting approach that allows to estimate additive or multiplicative models with a lot of flexibilty which allows to include domain knowladge. One of the key advantages is how robust it is to outliers and missing data compared with more traditional approaches like ARIMA.
+
+## Prophet
+```{r prophet_model, fig.width=7, fig.height=8}
+cases_by_day_ph <- cases_by_day %>% select(c("OCCUR_DATE","n"))
+colnames(cases_by_day_ph) <- c("ds","y")
+prophet_model <- prophet(changepoint.prior.scale=50)
+prophet_model <- add_country_holidays(prophet_model, country_name = 'US')
+prophet_model <- fit.prophet(prophet_model,cases_by_day_ph)
+future <- make_future_dataframe(prophet_model, periods = 365)
+forecast <- predict(prophet_model, future)
+prophet_plot_components(prophet_model,forecast)
+```
+```{r prophet_model_forecast, fig.width=7, fig.height=4}
+plot(prophet_model, forecast)
+```
+
+From the component graph of the prophet model it can also be concluded that holidays increase the amount of gun violence in the city, and that the days with more incidents are sunday and saturday followed by friday and monday.
+
+The sudden increase in cases that happened in 2020 makes the trend to turn upward. This upward trend is automaticaly continued by prophet when doing a forecast into the future. In order to explore what would be the situation without the outlier data of 2020 lets estimate another model dropping the last year of information.
+
+```{r prophet_model_2, fig.width=7, fig.height=8}
+cases_by_day_ph <- cases_by_day  %>% filter(OCCUR_YEAR < 2020) %>%    select(c("OCCUR_DATE","n"))
+colnames(cases_by_day_ph) <- c("ds","y")
+prophet_model <- prophet(changepoint.prior.scale=5)
+prophet_model <- add_country_holidays(prophet_model, country_name = 'US')
+prophet_model <- fit.prophet(prophet_model,cases_by_day_ph)
+future <- make_future_dataframe(prophet_model, periods = 365)
+forecast <- predict(prophet_model, future)
+prophet_plot_components(prophet_model,forecast)
+```
+```{r prophet_model_2_forecast, fig.width=7, fig.height=4}
+plot(prophet_model, forecast)
+```
+
+As shown in the components plot of this model without 2020, the trend does not have an upward turn. The desicion of not including 2020 produces minor changes in the time series components of the model, and a big change in the trend. Personally I think that the better approach is to drop this data while doing the estimation of the model and to forecast into the future using the monthly moving average adjusted by the yearly seasonality as the first plot shows that the situation is returnning to normal. This desicion induces bias and is dependent on the analyst.
+
+In order to make a more robust analysis one can manually specify the checkpoints to include more flexibility during covid and capture the volatility of the trend during 2020. Another option could be to include an external regresor that has information about the quarantine. 
+
+It would also be interesting to segment the analysis for different locations in NY and to include information like the severity of the incident and demographic characteristics of the people involved.
+
+
+### Session info
+```{r session_info}
+sessionInfo()
+```
